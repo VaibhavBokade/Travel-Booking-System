@@ -95,7 +95,7 @@ public class TourServiceImpl implements TourService {
         int availableSeats = totalSeats - seatsBooked;
         Tour tour = tourRepository.getById(tourId);
         if (tour != null) {
-            tour.setNumberOfSeats(availableSeats);
+            tour.setNumberOfAvailableSeats(availableSeats);
             tourRepository.save(tour);
         }
     }
@@ -103,9 +103,9 @@ public class TourServiceImpl implements TourService {
     @Transactional
     public void updateAvailableSeatsAfterCancelBooking(int tourId, int seatsCancel) {
         Tour tour = tourRepository.getById(tourId);
-        int availableSeats = tour.getNumberOfSeats() + seatsCancel;
+        int availableSeats = tour.getNumberOfAvailableSeats() + seatsCancel;
         if (tour != null) {
-            tour.setNumberOfSeats(availableSeats);
+            tour.setNumberOfAvailableSeats(availableSeats);
             tourRepository.save(tour);
         }
     }

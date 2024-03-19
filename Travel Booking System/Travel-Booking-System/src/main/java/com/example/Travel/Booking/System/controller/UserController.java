@@ -2,10 +2,11 @@ package com.example.Travel.Booking.System.controller;
 
 import com.example.Travel.Booking.System.cookies.CookieUtil;
 import com.example.Travel.Booking.System.dto.BookRequestDto;
+import com.example.Travel.Booking.System.dto.GetBookingsResponse;
 import com.example.Travel.Booking.System.dto.LoginDto;
-import com.example.Travel.Booking.System.dto.TourDetailsInfoResponseDto;
 import com.example.Travel.Booking.System.dto.UserDto;
 import com.example.Travel.Booking.System.entities.User;
+import com.example.Travel.Booking.System.entities.UserTour;
 import com.example.Travel.Booking.System.exception.*;
 import com.example.Travel.Booking.System.service.UserService;
 import com.example.Travel.Booking.System.validation.UserValidation;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 @RestController
 @RequestMapping("/travelBooking")
@@ -80,9 +82,9 @@ public class UserController {
                                            @RequestHeader(value = "tourId") int tourId, @RequestHeader(value = "noOfSeats") int noOfSeats) {
         try {
             String email = CookieUtil.getValue(request, "email");
-            userService.cancelBooking(email, tourId,noOfSeats);
+            userService.cancelBooking(email, tourId, noOfSeats);
             return ResponseEntity.ok("Booking canceled successfully");
-        } catch (BookingNotFoundException | UserNotFoundException |InvalidFormatException | TourNotFoundException e) {
+        } catch (BookingNotFoundException | UserNotFoundException | InvalidFormatException | TourNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error canceling booking.");
@@ -100,6 +102,21 @@ public class UserController {
         } catch (UserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (TourNotExistException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during tour booking.");
+        }
+    }
+
+    @GetMapping("/getBookings")
+    public ResponseEntity<?> showBookings(HttpServletRequest request) {
+        try {
+            String email = CookieUtil.getValue(request, "email");
+            List<GetBookingsResponse> tours = userService.showDetails(email);
+            return new ResponseEntity<>(tours, HttpStatus.FOUND);
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (BookingNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during tour booking.");

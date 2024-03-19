@@ -51,10 +51,10 @@ public class Tour {
     @JsonIgnore
     private List<UserTour> userTours;
 
-    private int numberOfSeats;
+    private int numberOfAvailableSeats;
 
     public Tour(BusType busType) {
         this.busType = busType;
-        this.numberOfSeats = this.busType.getNumberOfSeats();
+        this.numberOfAvailableSeats = this.busType.getNumberOfSeats();
     }
 }

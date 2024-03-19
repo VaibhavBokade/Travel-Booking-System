@@ -1,8 +1,8 @@
 package com.example.Travel.Booking.System.service.serviceImpl;
 
 import com.example.Travel.Booking.System.dto.BookRequestDto;
+import com.example.Travel.Booking.System.dto.GetBookingsResponse;
 import com.example.Travel.Booking.System.dto.LoginDto;
-import com.example.Travel.Booking.System.dto.TourDetailsInfoResponseDto;
 import com.example.Travel.Booking.System.entities.City;
 import com.example.Travel.Booking.System.entities.Tour;
 import com.example.Travel.Booking.System.entities.User;
@@ -107,13 +107,11 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-   // private int calculateNumberOfSeats(int )
-
     @Override
     public String bookTour(BookRequestDto bookRequestDto, String userEmail) {
         try {
             logger.info("START :: CLASS :: UserServiceImpl :: METHOD :: bookTour");
-            if ( StringUtils.isBlank(bookRequestDto.getArrivalTime()) || StringUtils.isBlank(bookRequestDto.getDepartureTime()) || bookRequestDto.getBusType() == null || bookRequestDto.getCost() == null || bookRequestDto.getNumberOfSeats() <= 0 ) {
+            if (StringUtils.isBlank(bookRequestDto.getArrivalTime()) || StringUtils.isBlank(bookRequestDto.getDepartureTime()) || bookRequestDto.getBusType() == null || bookRequestDto.getCost() == null || bookRequestDto.getNumberOfSeats() <= 0) {
                 throw new NullValueException("You have not selected the tour....");
             } else if (bookRequestDto.getCost() <= 0) {
                 throw new NullValueException("You have not enter 0 or negative tour cost....");
@@ -187,14 +185,53 @@ public class UserServiceImpl implements UserService {
                 throw new BookingNotFoundException("Booking not found for user " + userEmail + " and tour " + tourId);
             }
             user.getUserTours().remove(userTourToRemove);
-            tourService.updateAvailableSeatsAfterCancelBooking(tour.getTourId(),noOfCancelSeats);
+            tourService.updateAvailableSeatsAfterCancelBooking(tour.getTourId(), noOfCancelSeats);
             userRepository.save(user);
-        } catch (UserNotFoundException | TourNotFoundException| InvalidFormatException | BookingNotFoundException e) {
+        } catch (UserNotFoundException | TourNotFoundException | InvalidFormatException | BookingNotFoundException e) {
             logger.error("Exception occurred", e);
             throw e;
         } catch (Exception e) {
             logger.error("Error canceling booking.", e);
             throw new RuntimeException("Error canceling booking.", e);
+        }
+    }
+
+    @Override
+    public List<GetBookingsResponse> showDetails(String userEmail) {
+        try {
+            logger.info("START :: CLASS :: UserServiceImpl :: METHOD :: cancelBooking");
+            User user = userRepository.findByEmail(userEmail);
+            if (user == null) {
+                throw new UserNotFoundException("User with email " + userEmail + " not found");
+            }
+            List<UserTour> tours = user.getUserTours();
+            if (tours.isEmpty()) {
+                throw new BookingNotFoundException("No tours are booked yet..!");
+            }else {
+                List<GetBookingsResponse> getBookingsResponseList = new ArrayList<>();
+                for (UserTour tour:tours) {
+                    GetBookingsResponse getBookingsResponse = new GetBookingsResponse();
+                    getBookingsResponse.setSourceCity(tour.getTour().getSourceCity().getCityName());
+                    getBookingsResponse.setDestinationCity(tour.getTour().getDestinationCity().getCityName());
+                    getBookingsResponse.setCost(tour.getTour().getCost());
+                    getBookingsResponse.setArrangeDate(tour.getTour().getArrangeDate());
+                    getBookingsResponse.setArrivalTime(tour.getTour().getArrivalTime());
+                    getBookingsResponse.setDepartureTime(tour.getTour().getDepartureTime());
+                    getBookingsResponse.setBusType(tour.getTour().getBusType());
+                    getBookingsResponse.setBookedSeats(tour.getNumberOfSeats());
+                    getBookingsResponseList.add(getBookingsResponse);
+                }
+                return getBookingsResponseList;
+            }
+        } catch (UserNotFoundException e) {
+            logger.error("User Not Found Exception", e);
+            throw e;
+        } catch (BookingNotFoundException e) {
+            logger.error("Booking Not Found Exception", e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error during tour booking.", e);
+            throw new RuntimeException("Error during tour booking.", e);
         }
     }
 }
